@@ -1,8 +1,9 @@
 module Api
     module V1
       class ChallengesController < ApplicationController
+        before_action :authenticate_user!, only: %i[create update destroy]
         before_action :set_challenge, only: %i[show update destroy]
-
+        before_action :authorize_admin, only: %i[create update destroy]
         # GET    /api/v1/challenges
         def index
           # show all challenges
@@ -12,7 +13,8 @@ module Api
 
         # POST   /api/v1/challenges
         def create
-            # create single challenge
+            # @challenge = Challenge.new(challenges_params.merge(user_id: current_user.id))
+            @challenge = current_user.challenges.build(challenges_params)
             if @challenge.save
                 render json: { message: "Challenge added successfully", data: @challenge }
             else
@@ -49,6 +51,10 @@ module Api
         end
 
         private
+        def authorize_admin
+          render json: { message: "Forbidden Action" } unless current_user.email == ENV["ADMIN_EMAIL"]
+        end
+
         def set_challenge
             @challenge = Challenge.find(params[:id])
         end
